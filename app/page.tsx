@@ -372,9 +372,7 @@ export default function HomePage() {
                         <h3 className="font-medium text-foreground text-[11px] sm:text-xs line-clamp-2 leading-tight mb-0.5 sm:mb-1">
                           {video.name}
                         </h3>
-                        <span className="text-[9px] sm:text-[10px] text-muted-foreground">
-                          {formatFileSize(video.size)}
-                        </span>
+                        
                       </div>
                     </Card>
                   ))}

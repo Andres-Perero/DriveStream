@@ -147,28 +147,7 @@ export default function VideoPlayer({ video, onClose, onBack, onHome, showNaviga
               {video.name}
             </h2>
             <div className="flex items-center gap-1.5 sm:gap-2">
-              {showNavigation && onHome && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleHomeClick}
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-white hover:bg-white/20"
-                >
-                  <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Inicio</span>
-                </Button>
-              )}
-              {showNavigation && onBack && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleBackClick}
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-white hover:bg-white/20"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Atrás</span>
-                </Button>
-              )}
+       
               <Button
                 variant="ghost"
                 size="sm"
