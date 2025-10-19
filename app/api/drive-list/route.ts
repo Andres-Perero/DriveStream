@@ -250,15 +250,26 @@ function mergeFoldersAndVideos(files: any[]): any[] {
   // Convertir el mapa a array de carpetas fusionadas
   const mergedFolders = Array.from(folderMap.values())
 
-  // Cada video tiene un ID único que combina accountIndex + fileId
-  const allVideos = videos.map((video, index) => ({
-    ...video,
-    uniqueKey: `${video.accountIndex}-${video.id}-${index}`,
-  }))
+  const videoMap = new Map<string, any>()
 
-  //console.log(`[v0] Carpetas originales: ${folders.length}, Carpetas fusionadas: ${mergedFolders.length}`)
-  console.log(`[v0] Videos totales: ${allVideos.length}`)
+  for (const video of videos) {
+    // Crear una clave única basada en nombre y tamaño para detectar duplicados
+    const dedupeKey = `${video.name}-${video.size || "unknown"}`
 
-  // Retornar carpetas fusionadas + todos los videos
+    if (!videoMap.has(dedupeKey)) {
+      videoMap.set(dedupeKey, {
+        ...video,
+        uniqueKey: `${video.accountIndex}-${video.id}`,
+      })
+    }
+    // Si ya existe, lo ignoramos (es un duplicado)
+  }
+
+  const allVideos = Array.from(videoMap.values())
+
+  console.log(`[v0] Carpetas originales: ${folders.length}, Carpetas fusionadas: ${mergedFolders.length}`)
+  console.log(`[v0] Videos originales: ${videos.length}, Videos después de deduplicación: ${allVideos.length}`)
+
+  // Retornar carpetas fusionadas + videos sin duplicados
   return [...mergedFolders, ...allVideos]
 }

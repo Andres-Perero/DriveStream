@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Play, Loader2, Film, Folder, ArrowLeft, Moon, Sun, Home } from "lucide-react"
+import { Play, Loader2, Film, Folder, ArrowLeft, Moon, Sun, Home, ChevronRight, ArrowUpDown } from "lucide-react"
 import VideoPlayer from "@/components/video-player"
 
 interface DriveFile {
@@ -17,14 +17,18 @@ interface DriveFile {
   }
 }
 
+type SortOrder = "asc" | "desc"
+
 export default function HomePage() {
   const [items, setItems] = useState<DriveFile[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedVideo, setSelectedVideo] = useState<DriveFile | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
-  const [folderHistory, setFolderHistory] = useState<Array<{ id: string; name: string }>>([])
+  const [folderHistory, setFolderHistory] = useState<Array<{ id: string | null; name: string }>>([])
   const [theme, setTheme] = useState<"light" | "dark">("dark")
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc")
+  const [breadcrumbPath, setBreadcrumbPath] = useState<string[]>(["Inicio"])
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark")
@@ -57,7 +61,8 @@ export default function HomePage() {
   }
 
   const handleFolderClick = (folder: DriveFile) => {
-    setFolderHistory([...folderHistory, { id: currentFolderId || "", name: "Carpeta anterior" }])
+    setFolderHistory([...folderHistory, { id: currentFolderId, name: breadcrumbPath[breadcrumbPath.length - 1] }])
+    setBreadcrumbPath([...breadcrumbPath, folder.name])
     setCurrentFolderId(folder.id)
   }
 
@@ -66,6 +71,7 @@ export default function HomePage() {
       const previous = folderHistory[folderHistory.length - 1]
       setCurrentFolderId(previous.id)
       setFolderHistory(folderHistory.slice(0, -1))
+      setBreadcrumbPath(breadcrumbPath.slice(0, -1))
     }
   }
 
@@ -102,13 +108,48 @@ export default function HomePage() {
   const handleGoToRoot = () => {
     setCurrentFolderId(null)
     setFolderHistory([])
+    setBreadcrumbPath(["Inicio"])
   }
 
-  const folders = items.filter((item) => item.mimeType === "application/vnd.google-apps.folder")
-  const videos = items.filter((item) => item.mimeType.includes("video"))
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+  }
+
+  const getCurrentFolderName = (): string => {
+    if (currentFolderId === null) return "Inicio"
+    if (folderHistory.length > 0) {
+      const lastFolder = items.find((item) => item.id === currentFolderId)
+      return lastFolder?.name || "Carpeta"
+    }
+    return "Carpeta"
+  }
+
+  const sortItems = (itemsToSort: DriveFile[], order: SortOrder) => {
+    return [...itemsToSort].sort((a, b) => {
+      const comparison = a.name.localeCompare(b.name, "es", { sensitivity: "base" })
+      return order === "asc" ? comparison : -comparison
+    })
+  }
+
+  const folders = sortItems(
+    items.filter((item) => item.mimeType === "application/vnd.google-apps.folder"),
+    sortOrder,
+  )
+  const videos = sortItems(
+    items.filter((item) => item.mimeType.includes("video")),
+    sortOrder,
+  )
 
   if (selectedVideo) {
-    return <VideoPlayer video={selectedVideo} onClose={() => setSelectedVideo(null)} />
+    return (
+      <VideoPlayer
+        video={selectedVideo}
+        onClose={() => setSelectedVideo(null)}
+        onBack={handleBackClick}
+        onHome={handleGoToRoot}
+        showNavigation={folderHistory.length > 0 || currentFolderId !== null}
+      />
+    )
   }
 
   return (
@@ -124,6 +165,24 @@ export default function HomePage() {
               <h1 className="text-base sm:text-lg font-bold text-foreground truncate">DriveVideo</h1>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open("https://ok.ru/profile/591200398770", "_blank")}
+                className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950"
+                title="Visitar perfil de OK.ru"
+              >
+                <svg
+                  fill="currentColor"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                >
+                  <path d="M11.986 12.341c-2.825 0-5.173-2.346-5.173-5.122C6.813 4.347 9.161 2 11.987 2c2.922 0 5.173 2.346 5.173 5.219a5.142 5.142 0 0 1-5.157 5.123l-.017-.001zm0-7.324c-1.196 0-2.106 1.005-2.106 2.203 0 1.196.91 2.106 2.107 2.106 1.245 0 2.107-.91 2.107-2.106.001-1.199-.862-2.203-2.108-2.203zm2.06 11.586 2.923 2.825c.575.621.575 1.531 0 2.106-.622.621-1.581.621-2.06 0l-2.922-2.873-2.826 2.873c-.287.287-.671.43-1.103.43-.335 0-.718-.144-1.054-.43-.575-.575-.575-1.485 0-2.107l2.97-2.825a13.49 13.49 0 0 1-3.063-1.339c-.719-.383-.862-1.34-.479-2.059.479-.718 1.341-.909 2.108-.43a6.62 6.62 0 0 0 6.897 0c.767-.479 1.676-.288 2.107.43.432.719.239 1.675-.432 2.059-.909.575-1.963 1.006-3.065 1.341l-.001-.001z" />
+                </svg>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -174,6 +233,52 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {breadcrumbPath.length > 1 && (
+          <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+            {breadcrumbPath.map((pathName, index) => (
+              <div key={index} className="flex items-center gap-2">
+                {index > 0 && <ChevronRight className="w-4 h-4" />}
+                <button
+                  onClick={() => {
+                    if (index === 0) {
+                      handleGoToRoot()
+                    } else {
+                      const targetHistory = folderHistory[index - 1]
+                      setCurrentFolderId(targetHistory.id)
+                      setFolderHistory(folderHistory.slice(0, index - 1))
+                      setBreadcrumbPath(breadcrumbPath.slice(0, index + 1))
+                    }
+                  }}
+                  className={`hover:text-foreground transition-colors ${
+                    index === breadcrumbPath.length - 1 ? "text-foreground font-medium" : ""
+                  }`}
+                >
+                  {pathName}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && items.length > 0 && (
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {folders.length > 0 && `${folders.length} carpeta${folders.length !== 1 ? "s" : ""}`}
+              {folders.length > 0 && videos.length > 0 && " • "}
+              {videos.length > 0 && `${videos.length} video${videos.length !== 1 ? "s" : ""}`}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleSortOrder}
+              className="h-7 sm:h-8 px-2 sm:px-3 gap-1.5 bg-transparent"
+            >
+              <ArrowUpDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="text-xs sm:text-sm font-medium">{sortOrder === "asc" ? "A-Z" : "Z-A"}</span>
+            </Button>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
             <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-primary" />
@@ -231,7 +336,7 @@ export default function HomePage() {
               <div>
                 <h2 className="text-sm sm:text-base font-semibold text-foreground mb-2.5 sm:mb-3 flex items-center gap-2">
                   <Film className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-                  Videos ({videos.length})
+                  Videos
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2.5 sm:gap-3">
                   {videos.map((video, index) => (

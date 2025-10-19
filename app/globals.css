@@ -121,3 +121,30 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Protección anti-captura de video estilo Netflix */
+@layer utilities {
+  .video-protection {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    pointer-events: auto;
+  }
+
+  .no-capture {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+  }
+
+  /* Prevenir captura de pantalla en algunos navegadores */
+  @media screen {
+    .video-container {
+      -webkit-app-region: no-drag;
+    }
+  }
+}
