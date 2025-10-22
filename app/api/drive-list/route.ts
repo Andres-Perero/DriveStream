@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       accountIndex: index,
     }))
 
-    let allFiles: any[] = []
+      let allFiles: any[] = []
 
     if (requestedFolderId) {
       // Estamos navegando dentro de una carpeta específica
